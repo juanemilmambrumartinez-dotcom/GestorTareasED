@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using GestorTareasED.Api.Data;
-using GestorTareasED.Api.Models.Entities;
-using GestorTareasED.Api.DTOs.Project;
+using GestorTareasED.Domain.Entities;
+using GestorTareasED.Domain.Repository;
+using GestorTareasED.Infrastructure.Models;
 
 namespace GestorTareasED.Api.Controllers
 {
@@ -10,17 +9,17 @@ namespace GestorTareasED.Api.Controllers
     [Route("api/[controller]")]
     public class ProjectsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IProjectRepository _projectRepository;
 
-        public ProjectsController(AppDbContext context)
+        public ProjectsController(IProjectRepository projectRepository)
         {
-            _context = context;
+            _projectRepository = projectRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProjectResponseDto>>> GetAll()
         {
-            var projects = await _context.Projects.ToListAsync();
+            var projects = await _projectRepository.GetAllAsync();
             var result = projects.Select(p => new ProjectResponseDto
             {
                 Id = p.Id,
@@ -36,7 +35,7 @@ namespace GestorTareasED.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectResponseDto>> GetById(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
+            var project = await _projectRepository.GetByIdAsync(id);
             if (project == null) return NotFound();
 
             return Ok(new ProjectResponseDto
@@ -62,24 +61,23 @@ namespace GestorTareasED.Api.Controllers
                 IsActive = true
             };
 
-            _context.Projects.Add(project);
-            await _context.SaveChangesAsync();
+            var created = await _projectRepository.CreateAsync(project);
 
-            return CreatedAtAction(nameof(GetById), new { id = project.Id }, new ProjectResponseDto
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, new ProjectResponseDto
             {
-                Id = project.Id,
-                Name = project.Name,
-                Description = project.Description,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                IsActive = project.IsActive
+                Id = created.Id,
+                Name = created.Name,
+                Description = created.Description,
+                StartDate = created.StartDate,
+                EndDate = created.EndDate,
+                IsActive = created.IsActive
             });
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(int id, CreateProjectDto dto)
         {
-            var project = await _context.Projects.FindAsync(id);
+            var project = await _projectRepository.GetByIdAsync(id);
             if (project == null) return NotFound();
 
             project.Name = dto.Name;
@@ -87,18 +85,17 @@ namespace GestorTareasED.Api.Controllers
             project.StartDate = dto.StartDate;
             project.EndDate = dto.EndDate;
 
-            await _context.SaveChangesAsync();
+            await _projectRepository.UpdateAsync(project);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
+            var project = await _projectRepository.GetByIdAsync(id);
             if (project == null) return NotFound();
 
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync();
+            await _projectRepository.DeleteAsync(id);
             return NoContent();
         }
     }

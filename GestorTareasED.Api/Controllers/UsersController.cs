@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using GestorTareasED.Api.Models.Entities;
+using GestorTareasED.Domain.Entities;
 
 namespace GestorTareasED.Api.Controllers
 {
