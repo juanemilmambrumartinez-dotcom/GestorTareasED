@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using GestorTareasED.Domain.Entities;
-using GestorTareasED.Domain.Repository;
-using GestorTareasED.Infrastructure.Models;
+using GestorTareasED.Application.Contract;
+using GestorTareasED.Application.Dtos.Project;
 
 namespace GestorTareasED.Api.Controllers
 {
@@ -9,94 +8,72 @@ namespace GestorTareasED.Api.Controllers
     [Route("api/[controller]")]
     public class ProjectsController : ControllerBase
     {
-        private readonly IProjectRepository _projectRepository;
+        private readonly IProjectService _projectService;
 
-        public ProjectsController(IProjectRepository projectRepository)
+        public ProjectsController(IProjectService projectService)
         {
-            _projectRepository = projectRepository;
+            _projectService = projectService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProjectResponseDto>>> GetAll()
         {
-            var projects = await _projectRepository.GetAllAsync();
-            var result = projects.Select(p => new ProjectResponseDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate,
-                IsActive = p.IsActive
-            });
-            return Ok(result);
+            var projects = await _projectService.GetAllAsync();
+            return Ok(projects);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ProjectResponseDto>> GetById(int id)
         {
-            var project = await _projectRepository.GetByIdAsync(id);
+            var project = await _projectService.GetByIdAsync(id);
             if (project == null) return NotFound();
-
-            return Ok(new ProjectResponseDto
-            {
-                Id = project.Id,
-                Name = project.Name,
-                Description = project.Description,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                IsActive = project.IsActive
-            });
+            return Ok(project);
         }
 
         [HttpPost]
         public async Task<ActionResult<ProjectResponseDto>> Create(CreateProjectDto dto)
         {
-            var project = new Project
+            try
             {
-                Name = dto.Name,
-                Description = dto.Description,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                IsActive = true
-            };
-
-            var created = await _projectRepository.CreateAsync(project);
-
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, new ProjectResponseDto
+                var created = await _projectService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }
+            catch (ArgumentException ex)
             {
-                Id = created.Id,
-                Name = created.Name,
-                Description = created.Description,
-                StartDate = created.StartDate,
-                EndDate = created.EndDate,
-                IsActive = created.IsActive
-            });
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(int id, CreateProjectDto dto)
         {
-            var project = await _projectRepository.GetByIdAsync(id);
-            if (project == null) return NotFound();
-
-            project.Name = dto.Name;
-            project.Description = dto.Description;
-            project.StartDate = dto.StartDate;
-            project.EndDate = dto.EndDate;
-
-            await _projectRepository.UpdateAsync(project);
-            return NoContent();
+            try
+            {
+                await _projectService.UpdateAsync(id, dto);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var project = await _projectRepository.GetByIdAsync(id);
-            if (project == null) return NotFound();
-
-            await _projectRepository.DeleteAsync(id);
-            return NoContent();
+            try
+            {
+                await _projectService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException)
+            {
+                return NotFound();
+            }
         }
     }
 }

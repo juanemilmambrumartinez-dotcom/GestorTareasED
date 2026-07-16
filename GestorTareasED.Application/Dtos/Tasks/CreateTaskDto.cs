@@ -1,6 +1,6 @@
 using GestorTareasED.Domain.Entities;
 
-namespace GestorTareasED.Infrastructure.Models;
+namespace GestorTareasED.Application.Dtos.Tasks;
 
 public class CreateTaskDto
 {

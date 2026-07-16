@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GestorTareasED.Infrastructure\GestorTareasED.Infrastructure.csproj" />
+    <ProjectReference Include="..\GestorTareasED.Application\GestorTareasED.Application.csproj" />
   </ItemGroup>
 
 </Project>
