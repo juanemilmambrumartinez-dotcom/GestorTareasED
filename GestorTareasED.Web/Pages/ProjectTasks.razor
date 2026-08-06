@@ -1,0 +1,60 @@
+@page "/proyectos/{Id:int}"
+@inject GestorTareasED.Web.Services.ProjectApiService ProjectService
+@inject GestorTareasED.Web.Services.TaskApiService TaskService
+
+<h1>@(proyecto?.Name ?? "Cargando...")</h1>
+<p>@proyecto?.Description</p>
+
+<a href="/proyectos/@Id/tareas/nueva" class="btn btn-primary mb-3">+ Nueva Tarea</a>
+<a href="/proyectos" class="btn btn-secondary mb-3">Volver a Proyectos</a>
+
+@if (tareas == null)
+{
+    <p><em>Cargando tareas...</em></p>
+}
+else if (tareas.Count == 0)
+{
+    <p>Este proyecto no tiene tareas todavía.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Fecha límite</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tarea in tareas)
+            {
+                <tr>
+                    <td>@tarea.Title</td>
+                    <td>@tarea.Description</td>
+                    <td>@tarea.Priority</td>
+                    <td>@tarea.Status</td>
+                    <td>@tarea.DueDate.ToShortDateString()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private GestorTareasED.Web.Models.ProjectResponseDto? proyecto;
+    private List<GestorTareasED.Web.Models.TaskResponseDto>? tareas;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        proyecto = await ProjectService.GetByIdAsync(Id);
+
+        var todasLasTareas = await TaskService.GetAllAsync();
+        tareas = todasLasTareas.Where(t => t.ProjectId == Id).ToList();
+    }
+}

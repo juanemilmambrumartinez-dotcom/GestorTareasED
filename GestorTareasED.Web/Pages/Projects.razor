@@ -1,0 +1,54 @@
+@page "/proyectos"
+@inject GestorTareasED.Web.Services.ProjectApiService ProjectService
+
+<h1>Proyectos</h1>
+
+<a href="/proyectos/nuevo" class="btn btn-primary mb-3">+ Nuevo Proyecto</a>
+
+@if (proyectos == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (proyectos.Count == 0)
+{
+    <p>No hay proyectos registrados todavía.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Activo</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var proyecto in proyectos)
+            {
+                <tr>
+                    <td>@proyecto.Name</td>
+                    <td>@proyecto.Description</td>
+                    <td>@proyecto.StartDate.ToShortDateString()</td>
+                    <td>@proyecto.EndDate.ToShortDateString()</td>
+                    <td>@(proyecto.IsActive ? "Sí" : "No")</td>
+                    <td>
+                        <a href="/proyectos/@proyecto.Id">Ver tareas</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<GestorTareasED.Web.Models.ProjectResponseDto>? proyectos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        proyectos = await ProjectService.GetAllAsync();
+    }
+}

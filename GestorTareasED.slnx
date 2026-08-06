@@ -3,4 +3,5 @@
   <Project Path="GestorTareasED.Application/GestorTareasED.Application.csproj" />
   <Project Path="GestorTareasED.Domain/GestorTareasED.Domain.csproj" />
   <Project Path="GestorTareasED.Infrastructure/GestorTareasED.Infrastructure.csproj" />
+  <Project Path="GestorTareasED.Web/GestorTareasED.Web.csproj" />
 </Solution>

@@ -1,0 +1,73 @@
+@page "/proyectos/{ProjectId:int}/tareas/nueva"
+@inject GestorTareasED.Web.Services.TaskApiService TaskService
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+
+<h1>Nueva Tarea</h1>
+
+<EditForm Model="@nuevaTarea" OnValidSubmit="@Guardar">
+    <div class="mb-3">
+        <label class="form-label">Título</label>
+        <InputText class="form-control" @bind-Value="nuevaTarea.Title" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Descripción</label>
+        <InputTextArea class="form-control" @bind-Value="nuevaTarea.Description" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Prioridad</label>
+        <InputSelect class="form-control" @bind-Value="nuevaTarea.Priority">
+            <option value="Low">Baja</option>
+            <option value="Medium">Media</option>
+            <option value="High">Alta</option>
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha límite</label>
+        <InputDate class="form-control" @bind-Value="nuevaTarea.DueDate" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMensaje))
+    {
+        <div class="alert alert-danger">@errorMensaje</div>
+    }
+
+    <button type="submit" class="btn btn-primary" disabled="@guardando">
+        @(guardando ? "Guardando..." : "Guardar")
+    </button>
+    <a href="/proyectos/@ProjectId" class="btn btn-secondary">Cancelar</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+
+    private GestorTareasED.Web.Models.CreateTaskDto nuevaTarea = new();
+    private string? errorMensaje;
+    private bool guardando = false;
+
+    protected override void OnParametersSet()
+    {
+        nuevaTarea.ProjectId = ProjectId;
+    }
+
+    private async Task Guardar()
+    {
+        guardando = true;
+        errorMensaje = null;
+
+        var response = await TaskService.CreateAsync(nuevaTarea);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo($"/proyectos/{ProjectId}");
+        }
+        else
+        {
+            errorMensaje = await response.Content.ReadAsStringAsync();
+            guardando = false;
+        }
+    }
+}
