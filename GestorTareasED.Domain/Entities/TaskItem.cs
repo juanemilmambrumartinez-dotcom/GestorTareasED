@@ -30,4 +30,31 @@ public class TaskItem : BaseEntity
     [ForeignKey("Project")]
     public int ProjectId { get; set; }
     public Project? Project { get; set; }
+
+    
+    public TaskItem()
+    {
+    }
+
+    
+    public TaskItem(string title, string description, DateTime dueDate, int projectId)
+    {
+        Title = title;
+        Description = description;
+        DueDate = dueDate;
+        ProjectId = projectId;
+        Priority = TaskPriority.Medium;
+        Status = TaskStatus.Pending;
+    }
+
+    
+    public TaskItem(string title, string description, DateTime dueDate, int projectId, TaskPriority priority)
+    {
+        Title = title;
+        Description = description;
+        DueDate = dueDate;
+        ProjectId = projectId;
+        Priority = priority;
+        Status = TaskStatus.Pending;
+    }
 }

@@ -30,14 +30,7 @@ public class ProjectService : IProjectService
     {
         Validate(dto);
 
-        var project = new Project
-        {
-            Name = dto.Name.Trim(),
-            Description = dto.Description.Trim(),
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate,
-            IsActive = true
-        };
+        var project = new Project(dto.Name.Trim(), dto.Description.Trim(), dto.StartDate, dto.EndDate);
 
         var created = await _projectRepository.CreateAsync(project);
         return MapToResponseDto(created);

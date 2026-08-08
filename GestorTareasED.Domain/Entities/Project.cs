@@ -11,4 +11,29 @@ public class Project : BaseEntity
     public bool IsActive { get; set; } = true;
 
     public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
+
+    
+    public Project()
+    {
+    }
+
+    
+    public Project(string name, string description, DateTime startDate, DateTime endDate)
+    {
+        Name = name;
+        Description = description;
+        StartDate = startDate;
+        EndDate = endDate;
+        IsActive = true;
+    }
+
+   
+    public Project(string name, string description, DateTime startDate, DateTime endDate, bool isActive)
+    {
+        Name = name;
+        Description = description;
+        StartDate = startDate;
+        EndDate = endDate;
+        IsActive = isActive;
+    }
 }

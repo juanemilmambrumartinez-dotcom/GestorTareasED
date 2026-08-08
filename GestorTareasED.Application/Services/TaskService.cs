@@ -32,15 +32,7 @@ public class TaskService : ITaskService
     {
         await ValidateAsync(dto);
 
-        var task = new TaskItem
-        {
-            Title = dto.Title.Trim(),
-            Description = dto.Description.Trim(),
-            Priority = dto.Priority,
-            Status = GestorTareasED.Domain.Entities.TaskStatus.Pending,
-            DueDate = dto.DueDate,
-            ProjectId = dto.ProjectId
-        };
+       var task = new TaskItem(dto.Title.Trim(), dto.Description.Trim(), dto.DueDate, dto.ProjectId, dto.Priority);
 
         var created = await _taskRepository.CreateAsync(task);
 
