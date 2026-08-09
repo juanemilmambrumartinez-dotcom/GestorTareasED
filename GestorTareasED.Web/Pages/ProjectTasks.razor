@@ -2,11 +2,16 @@
 @inject GestorTareasED.Web.Services.ProjectApiService ProjectService
 @inject GestorTareasED.Web.Services.TaskApiService TaskService
 
-<h1>@(proyecto?.Name ?? "Cargando...")</h1>
-<p>@proyecto?.Description</p>
-
-<a href="/proyectos/@Id/tareas/nueva" class="btn btn-primary mb-3">+ Nueva Tarea</a>
-<a href="/proyectos" class="btn btn-secondary mb-3">Volver a Proyectos</a>
+<div class="page-header">
+    <div>
+        <h1>@(proyecto?.Name ?? "Cargando...")</h1>
+        <p class="page-subtitle">@proyecto?.Description</p>
+    </div>
+    <div class="header-actions">
+        <a href="/proyectos/@Id/tareas/nueva" class="btn btn-primary">+ Nueva Tarea</a>
+        <a href="/proyectos" class="btn btn-secondary">Volver a Proyectos</a>
+    </div>
+</div>
 
 @if (tareas == null)
 {
@@ -14,33 +19,55 @@
 }
 else if (tareas.Count == 0)
 {
-    <p>Este proyecto no tiene tareas todavía.</p>
+    <div class="empty-state">
+        <p>Este proyecto no tiene tareas todavía.</p>
+    </div>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Título</th>
-                <th>Descripción</th>
-                <th>Prioridad</th>
-                <th>Estado</th>
-                <th>Fecha límite</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var tarea in tareas)
-            {
+    <div class="table-card">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>@tarea.Title</td>
-                    <td>@tarea.Description</td>
-                    <td>@tarea.Priority</td>
-                    <td>@tarea.Status</td>
-                    <td>@tarea.DueDate.ToShortDateString()</td>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Prioridad</th>
+                    <th>Estado</th>
+                    <th>Fecha límite</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var tarea in tareas)
+                {
+                    <tr>
+                        <td>@tarea.Title</td>
+                        <td>@tarea.Description</td>
+                        <td><span class="badge @PrioridadClase(tarea.Priority)">@tarea.Priority</span></td>
+                        <td><span class="badge badge-muted">@tarea.Status</span></td>
+                        <td>@tarea.DueDate.ToShortDateString()</td>
+                        <td class="actions-cell">
+                            @if (confirmandoId == tarea.Id)
+                            {
+                                <span class="confirm-text">¿Eliminar?</span>
+                                <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminar(tarea.Id)">Sí</button>
+                                <button class="btn btn-secondary btn-sm" @onclick="CancelarEliminar">No</button>
+                            }
+                            else
+                            {
+                                <button class="btn-link btn-link-danger" @onclick="() => PedirConfirmacion(tarea.Id)">Eliminar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMensaje))
+{
+    <div class="alert alert-danger mt-3">@errorMensaje</div>
 }
 
 @code {
@@ -49,12 +76,52 @@ else
 
     private GestorTareasED.Web.Models.ProjectResponseDto? proyecto;
     private List<GestorTareasED.Web.Models.TaskResponseDto>? tareas;
+    private int? confirmandoId;
+    private string? errorMensaje;
 
     protected override async Task OnParametersSetAsync()
     {
         proyecto = await ProjectService.GetByIdAsync(Id);
+        await CargarTareas();
+    }
 
+    private async Task CargarTareas()
+    {
         var todasLasTareas = await TaskService.GetAllAsync();
         tareas = todasLasTareas.Where(t => t.ProjectId == Id).ToList();
     }
+
+    private void PedirConfirmacion(int id)
+    {
+        errorMensaje = null;
+        confirmandoId = id;
+    }
+
+    private void CancelarEliminar()
+    {
+        confirmandoId = null;
+    }
+
+    private async Task ConfirmarEliminar(int id)
+    {
+        var response = await TaskService.DeleteAsync(id);
+        confirmandoId = null;
+
+        if (response.IsSuccessStatusCode)
+        {
+            await CargarTareas();
+        }
+        else
+        {
+            errorMensaje = await response.Content.ReadAsStringAsync();
+        }
+    }
+
+    private string PrioridadClase(string prioridad) => prioridad switch
+    {
+        "High" => "badge-danger",
+        "Medium" => "badge-warning",
+        "Low" => "badge-success",
+        _ => "badge-muted"
+    };
 }

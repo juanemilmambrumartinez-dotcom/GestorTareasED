@@ -1,9 +1,13 @@
 @page "/proyectos"
 @inject GestorTareasED.Web.Services.ProjectApiService ProjectService
 
-<h1>Proyectos</h1>
-
-<a href="/proyectos/nuevo" class="btn btn-primary mb-3">+ Nuevo Proyecto</a>
+<div class="page-header">
+    <div>
+        <h1>Proyectos</h1>
+        <p class="page-subtitle">Todos los proyectos del equipo, en un solo lugar.</p>
+    </div>
+    <a href="/proyectos/nuevo" class="btn btn-primary">+ Nuevo Proyecto</a>
+</div>
 
 @if (proyectos == null)
 {
@@ -11,44 +15,100 @@
 }
 else if (proyectos.Count == 0)
 {
-    <p>No hay proyectos registrados todavía.</p>
+    <div class="empty-state">
+        <p>No hay proyectos registrados todavía.</p>
+    </div>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Inicio</th>
-                <th>Fin</th>
-                <th>Activo</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var proyecto in proyectos)
-            {
+    <div class="table-card">
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>@proyecto.Name</td>
-                    <td>@proyecto.Description</td>
-                    <td>@proyecto.StartDate.ToShortDateString()</td>
-                    <td>@proyecto.EndDate.ToShortDateString()</td>
-                    <td>@(proyecto.IsActive ? "Sí" : "No")</td>
-                    <td>
-                        <a href="/proyectos/@proyecto.Id">Ver tareas</a>
-                    </td>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th>Estado</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var proyecto in proyectos)
+                {
+                    <tr>
+                        <td>@proyecto.Name</td>
+                        <td>@proyecto.Description</td>
+                        <td>@proyecto.StartDate.ToShortDateString()</td>
+                        <td>@proyecto.EndDate.ToShortDateString()</td>
+                        <td>
+                            <span class="badge @(proyecto.IsActive ? "badge-success" : "badge-muted")">
+                                @(proyecto.IsActive ? "Activo" : "Inactivo")
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            @if (confirmandoId == proyecto.Id)
+                            {
+                                <span class="confirm-text">¿Eliminar?</span>
+                                <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminar(proyecto.Id)">Sí</button>
+                                <button class="btn btn-secondary btn-sm" @onclick="CancelarEliminar">No</button>
+                            }
+                            else
+                            {
+                                <a href="/proyectos/@proyecto.Id" class="btn-link">Ver tareas</a>
+                                <button class="btn-link btn-link-danger" @onclick="() => PedirConfirmacion(proyecto.Id)">Eliminar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMensaje))
+{
+    <div class="alert alert-danger mt-3">@errorMensaje</div>
 }
 
 @code {
     private List<GestorTareasED.Web.Models.ProjectResponseDto>? proyectos;
+    private int? confirmandoId;
+    private string? errorMensaje;
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarProyectos();
+    }
+
+    private async Task CargarProyectos()
+    {
         proyectos = await ProjectService.GetAllAsync();
+    }
+
+    private void PedirConfirmacion(int id)
+    {
+        errorMensaje = null;
+        confirmandoId = id;
+    }
+
+    private void CancelarEliminar()
+    {
+        confirmandoId = null;
+    }
+
+    private async Task ConfirmarEliminar(int id)
+    {
+        var response = await ProjectService.DeleteAsync(id);
+        confirmandoId = null;
+
+        if (response.IsSuccessStatusCode)
+        {
+            await CargarProyectos();
+        }
+        else
+        {
+            errorMensaje = await response.Content.ReadAsStringAsync();
+        }
     }
 }
