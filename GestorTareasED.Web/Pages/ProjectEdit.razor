@@ -1,0 +1,89 @@
+@page "/proyectos/{Id:int}/editar"
+@inject GestorTareasED.Web.Services.ProjectApiService ProjectService
+@inject Microsoft.AspNetCore.Components.NavigationManager Navigation
+
+<h1>Editar Proyecto</h1>
+
+@if (modelo == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <EditForm Model="@modelo" OnValidSubmit="@Guardar">
+        <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <InputText class="form-control" @bind-Value="modelo.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <InputTextArea class="form-control" @bind-Value="modelo.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Fecha de inicio</label>
+            <InputDate class="form-control" @bind-Value="modelo.StartDate" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Fecha de fin</label>
+            <InputDate class="form-control" @bind-Value="modelo.EndDate" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMensaje))
+        {
+            <div class="alert alert-danger">@errorMensaje</div>
+        }
+
+        <button type="submit" class="btn btn-primary" disabled="@guardando">
+            @(guardando ? "Guardando..." : "Guardar cambios")
+        </button>
+        <a href="/proyectos" class="btn btn-secondary">Cancelar</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private GestorTareasED.Web.Models.CreateProjectDto? modelo;
+    private string? errorMensaje;
+    private bool guardando = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var proyecto = await ProjectService.GetByIdAsync(Id);
+
+        if (proyecto != null)
+        {
+            modelo = new GestorTareasED.Web.Models.CreateProjectDto
+            {
+                Name = proyecto.Name,
+                Description = proyecto.Description,
+                StartDate = proyecto.StartDate,
+                EndDate = proyecto.EndDate
+            };
+        }
+    }
+
+    private async Task Guardar()
+    {
+        if (modelo == null) return;
+
+        guardando = true;
+        errorMensaje = null;
+
+        var response = await ProjectService.UpdateAsync(Id, modelo);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("/proyectos");
+        }
+        else
+        {
+            errorMensaje = await response.Content.ReadAsStringAsync();
+            guardando = false;
+        }
+    }
+}

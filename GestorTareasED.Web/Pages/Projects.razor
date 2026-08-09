@@ -53,9 +53,10 @@ else
                                 <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminar(proyecto.Id)">Sí</button>
                                 <button class="btn btn-secondary btn-sm" @onclick="CancelarEliminar">No</button>
                             }
-                            else
+                           else
                             {
                                 <a href="/proyectos/@proyecto.Id" class="btn-link">Ver tareas</a>
+                                <a href="/proyectos/@proyecto.Id/editar" class="btn-link">Editar</a>
                                 <button class="btn-link btn-link-danger" @onclick="() => PedirConfirmacion(proyecto.Id)">Eliminar</button>
                             }
                         </td>
